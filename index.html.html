@@ -1,0 +1,2106 @@
+<!-- Chosen Palette: Warm Neutral & Tech - Background: #F9FAFB (Cool Gray 50), Primary Text: #1F2937 (Gray 800), Accent: #EA580C (Orange 600 - Warmth), Secondary: #0D9488 (Teal 600 - Tech/Intelligence) -->
+
+<!-- Application Structure Plan: The application is designed as a "Digital Invention Workstation" or "Interactive Roadmap" guiding the user through the 5-step invention process defined in the worksheets.
+1. Structure: A step-by-step navigation (tabs) representing the 5 worksheets (Discovery, Ideation, Blueprint, Improvement, Reflection). This linear flow mirrors the educational process.
+2. Key Interactions:
+- "Appropriate Technology Card Flip": To understand the core value proposition.
+- "SCAMPER Simulator": Buttons to toggle between different thinking techniques with examples from the text.
+- "Idea Evaluation Chart": A bar chart to visually compare two ideas based on 'Warmth', 'Feasibility', and 'Creativity'.
+- "Prompt Builder": Real-time text assembly from 'Role', 'Task', and 'Constraint' inputs.
+- "Self-Growth Radar": A radar chart for the final self-assessment.
+3. User Flow: Users start by understanding the "Why" (Warm Tech), move to "What" (SCAMPER), then "How" (Prompt), "Refine" (Debugging), and finally "Reflect" (Growth). This structure breaks down the dense text into actionable, bite-sized tasks.
+-->
+
+<!-- Visualization & Content Choices:
+1. Report Info: Appropriate Technology Concepts -> Goal: Inform/Inspire -> Viz: Interactive Concept Cards -> Interaction: Click to reveal details -> Justification: Breaks down abstract concepts into digestible examples (Jar Fridge, Q-Drum).
+2. Report Info: Idea Selection (Worksheet 2) -> Goal: Compare/Decide -> Viz: Chart.js Bar Chart (Idea A vs B) -> Interaction: Visual comparison of scores -> Justification: Teaches technical decision making based on criteria.
+3. Report Info: SCAMPER Techniques -> Goal: Teach Method -> Viz: Dynamic Text Block -> Interaction: Button selection updates content -> Justification: Immediate feedback on how the technique changes an idea.
+4. Report Info: Self Assessment (Worksheet 5) -> Goal: Reflect -> Viz: Chart.js Radar Chart -> Interaction: Visualizing growth areas -> Justification: Provides a holistic view of the student's development.
+5. No SVGs/Mermaid used. Unicode icons and CSS styling used for visuals.
+-->
+
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI S/W 발명가 디지털 워크스테이션</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+    body {
+        font-family: 'Noto Sans KR', sans-serif;
+        background-color: #F9FAFB; /* Cool Gray 50 */
+        color: #1F2937; /* Gray 800 */
+    }
+
+    .chart-container {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        height: 300px;
+        max-height: 400px;
+    }
+
+    @media (min-width: 768px) {
+        .chart-container {
+            height: 350px;
+        }
+    }
+
+    .step-content {
+        display: none;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .step-content.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1; 
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #cbd5e1; 
+        border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8; 
+    }
+
+    /* Print Styles */
+    @media print {
+        body {
+            background-color: white;
+        }
+        
+        header, nav, footer {
+            display: none;
+        }
+        
+        .step-content {
+            display: block !important;
+            page-break-after: always;
+        }
+        
+        .step-content:last-of-type {
+            page-break-after: auto;
+        }
+        
+        .bg-teal-50, .bg-yellow-50, .bg-blue-50, .bg-purple-50, .bg-indigo-50 {
+            background-color: #f9fafb !important;
+            border: 1px solid #d1d5db;
+        }
+        
+        input, textarea, button {
+            border: 1px solid #9ca3af !important;
+        }
+        
+        .chart-container canvas {
+            max-height: 250px;
+        }
+        
+        @page {
+            margin: 1.5cm;
+        }
+    }
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<!-- Header -->
+<header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span class="text-3xl">🤖</span>
+            <h1 class="text-xl font-bold text-gray-900 tracking-tight">AI S/W 발명가 <span class="text-teal-600">워크스테이션</span></h1>
+        </div>
+        <div class="text-sm text-gray-500 hidden sm:block">
+            세상을 바꾸는 따뜻한 기술
+        </div>
+    </div>
+</header>
+
+<!-- Main Navigation (Process Steps) -->
+<nav class="bg-white border-b border-gray-200 overflow-x-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex space-x-8" id="nav-tabs">
+            <!-- Nav items injected by JS -->
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+    <!-- Step 1: Empathy & Definition -->
+    <section id="step-1" class="step-content active">
+        <div class="mb-8 bg-teal-50 border-l-4 border-teal-500 p-4 rounded-r-lg">
+            <h2 class="text-2xl font-bold text-teal-800 mb-2">활동지 1: 발명 탐색 및 따뜻한 문제 정의 (1~2차시)</h2>
+            <p class="text-teal-700 italic text-lg">
+                "발명은 주변에 대한 관심과 '나눔'의 마음에서 시작됩니다."
+            </p>
+        </div>
+
+        <!-- Section 1: 생활 속 발명품과 영향 -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>💡</span> 1. 생활 속 발명품과 영향 (교과서 내용 반영)
+            </h3>
+            <p class="text-sm text-gray-600 mb-4">
+                우리 생활에 영향을 주는 발명품 사례를 조사하고, 내가 사용해 본 경험을 정리해 봅시다.
+            </p>
+            
+            <!-- Example -->
+            <div class="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
+                <div class="text-sm font-medium text-gray-700 mb-2">📌 예시</div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">발명품</label>
+                        <div class="p-2 bg-white rounded border border-gray-300 text-sm">전자레인지</div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">기능</label>
+                        <div class="p-2 bg-white rounded border border-gray-300 text-sm">음식 데우기</div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">우리 생활에 주는 영향</label>
+                        <div class="p-2 bg-white rounded border border-gray-300 text-sm">식사 준비가 편리해짐</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Input -->
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div class="text-sm font-medium text-blue-900 mb-3">✏️ 나의 사례</div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">발명품</label>
+                        <input type="text" class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm" placeholder="예: 스마트폰">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">기능</label>
+                        <input type="text" class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm" placeholder="예: 정보 검색">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">우리 생활에 주는 영향</label>
+                        <input type="text" class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm" placeholder="예: 언제 어디서나 정보 확인">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">자세한 설명</label>
+                    <textarea rows="3" class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm" placeholder="내가 사용해 본 경험과 느낀 점을 자유롭게 작성하세요..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: 적정 기술과 S/W -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>🌿</span> 2. 적정 기술(Appropriate Technology)과 S/W
+            </h3>
+            
+            <!-- Concept -->
+            <div class="bg-green-50 p-4 rounded-lg mb-4 border-l-4 border-green-500">
+                <div class="text-sm font-bold text-green-900 mb-2">💡 개념</div>
+                <p class="text-sm text-green-800">
+                    지역 공동체의 조건을 고려하여 <strong>나눔과 공유의 가치</strong>를 실천하는 기술입니다.
+                </p>
+            </div>
+
+            <!-- Case Study -->
+            <div class="mb-4">
+                <div class="text-sm font-bold text-gray-900 mb-3">📚 사례 공부</div>
+                <p class="text-sm text-gray-700 mb-3">
+                    항아리 냉장고, 큐드럼, 태양열 조리기와 같은 '따뜻한 기술'이 소프트웨어(앱)로 만들어진다면 어떤 모습일까요?
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Card 1: 항아리 냉장고 -->
+                    <div class="p-4 bg-orange-50 rounded-lg border border-orange-100 cursor-pointer card-hover transition-all duration-300" onclick="alert('항아리 냉장고: 전기 없이도 젖은 모래의 기화열을 이용해 음식을 신선하게 보관합니다. 아프리카 등 전기가 부족한 지역을 위한 따뜻한 기술입니다.\n\n💡 S/W로 만든다면?\n- 냉장 온도 예측 앱\n- 지역별 최적 보관법 안내 앱')">
+                        <div class="text-2xl mb-2">🏺</div>
+                        <h4 class="font-bold text-orange-800 mb-1">항아리 냉장고</h4>
+                        <p class="text-xs text-gray-600">클릭하여 자세히 보기</p>
+                    </div>
+
+                    <!-- Card 2: 큐드럼 -->
+                    <div class="p-4 bg-blue-50 rounded-lg border border-blue-100 cursor-pointer card-hover transition-all duration-300" onclick="alert('큐드럼: 도넛 모양의 물통으로, 어린이나 노약자도 힘들이지 않고 먼 거리에서 물을 굴려 운반할 수 있게 돕습니다.\n\n💡 S/W로 만든다면?\n- 근처 물 위치 안내 지도 앱\n- 물 운반 거리 측정 및 기록 앱')">
+                        <div class="text-2xl mb-2">💧</div>
+                        <h4 class="font-bold text-blue-800 mb-1">큐드럼 (Q-Drum)</h4>
+                        <p class="text-xs text-gray-600">클릭하여 자세히 보기</p>
+                    </div>
+
+                    <!-- Card 3: 태양열 조리기 -->
+                    <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-100 cursor-pointer card-hover transition-all duration-300" onclick="alert('태양열 조리기: 태양 에너지만으로 음식을 조리할 수 있는 친환경 기술입니다.\n\n💡 S/W로 만든다면?\n- 태양 위치 추적 및 최적 조리 시간 알림 앱\n- 태양열 조리 레시피 공유 앱')">
+                        <div class="text-2xl mb-2">☀️</div>
+                        <h4 class="font-bold text-yellow-800 mb-1">태양열 조리기</h4>
+                        <p class="text-xs text-gray-600">클릭하여 자세히 보기</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thinking Space -->
+            <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <div class="text-sm font-medium text-purple-900 mb-2">🤔 생각해보기</div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">
+                    위 사례들처럼, 우리 주변의 어려운 이웃을 도울 수 있는 S/W 아이디어를 적어보세요.
+                </label>
+                <textarea rows="3" class="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 text-sm" placeholder="예: 시각장애인을 위한 음성 안내 앱, 어르신을 위한 큰 글씨 메시지 앱 등..."></textarea>
+            </div>
+        </div>
+
+        <!-- Section 3: 불편함 관찰 및 진짜 문제 찾기 -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>🔍</span> 3. 불편함 관찰 및 진짜 문제 찾기
+            </h3>
+            <p class="text-sm text-gray-600 mb-4">
+                책상 위 연필이 굴러떨어지는 상황이나 우산꽂이에서 내 우산을 찾기 힘든 상황처럼, 
+                내가 해결하고 싶은 문제를 그림이나 글로 나타내 보세요.
+            </p>
+
+            <!-- Drawing/Writing Space -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">📝 문제 상황 (그림 또는 글로 기록)</label>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 min-h-[200px]">
+                    <textarea class="w-full h-full min-h-[180px] p-3 border-0 bg-transparent focus:outline-none focus:ring-0 resize-none text-sm" placeholder="여기에 문제 상황을 그림으로 그리거나 자세히 설명하세요...
+
+예시 1: 우산꽂이에 우산이 너무 많아서 내 우산을 찾기 힘들어요.
+예시 2: 연필이 책상에서 자꾸 굴러떨어져요.
+예시 3: 급식실에서 내 식판을 찾기 어려워요."></textarea>
+                </div>
+            </div>
+
+            <!-- Problem Analysis (육하원칙) -->
+            <div class="bg-teal-50 p-5 rounded-lg border border-teal-200">
+                <div class="text-sm font-bold text-teal-900 mb-4">🔎 문제 분석 (육하원칙)</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">누가 (Who)</label>
+                        <input type="text" class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm" placeholder="예: 우리 반 친구들이">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">언제 (When)</label>
+                        <input type="text" class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm" placeholder="예: 비 오는 날 하교할 때">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">어디서 (Where)</label>
+                        <input type="text" class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm" placeholder="예: 학교 현관 우산꽂이에서">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">무엇을 (What)</label>
+                        <input type="text" class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm" placeholder="예: 내 우산을 찾는 일">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">왜 불편한가요? (Why)</label>
+                        <textarea rows="2" class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm" placeholder="예: 우산 모양이 비슷해서 섞이면 찾는데 오래 걸리고, 다른 사람의 우산을 잘못 가져갈 수도 있어요."></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">어떻게 해결하고 싶나요? (How)</label>
+                        <textarea rows="2" class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm" placeholder="예: 내 우산에 이름표를 붙이거나, 스마트폰으로 우산 위치를 찾을 수 있는 앱을 만들고 싶어요."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reflection Journal for Step 1 -->
+        <div class="mt-8 bg-white rounded-xl shadow p-6 border-l-4 border-teal-500">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>🌿</span> [1~2차시 성찰 일지] 발명의 눈
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">📚 배운 점</label>
+                    <p class="text-xs text-gray-600 mb-2 italic">발명품이 우리 사회에 '나눔'을 실천할 수 있다는 것을 알게 되었나요?</p>
+                    <textarea class="w-full p-3 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm" rows="3" placeholder="적정 기술과 발명에 대해 배운 점을 적어보세요..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">💭 느낀 점</label>
+                    <p class="text-xs text-gray-600 mb-2 italic">AI에게 내 불편함을 설명했을 때, AI는 얼마나 공감하며 답변해주었나요?</p>
+                    <textarea class="w-full p-3 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm" rows="3" placeholder="문제를 찾고 AI와 대화하면서 느낀 점을 자유롭게 적어보세요..."></textarea>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Step 2: Ideation & SCAMPER -->
+    <section id="step-2" class="step-content">
+        <div class="mb-8 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
+            <h2 class="text-2xl font-bold text-yellow-800 mb-2">활동지 2: 아이디어 탐색 및 SCAMPER 디자인 (3~4차시)</h2>
+            <p class="text-yellow-700 italic text-lg">
+                "사고 기법을 활용하면 평범한 생각이 특별한 발명이 됩니다."
+            </p>
+        </div>
+
+        <!-- Section 1: 발명 사고 기법 적용하기 -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>💡</span> 1. 발명 사고 기법 적용하기
+            </h3>
+            <p class="text-sm text-gray-600 mb-4">
+                교과서의 기법을 프롬프트(명령어)로 바꿔서 AI와 대화해 봅시다.
+            </p>
+
+            <!-- SCAMPER Techniques Grid -->
+            <div class="space-y-4">
+                <!-- Technique 1: Combine (더하기) -->
+                <div class="border-2 border-indigo-200 rounded-lg overflow-hidden">
+                    <div class="bg-indigo-100 px-4 py-3 border-b border-indigo-200">
+                        <h4 class="font-bold text-indigo-900 flex items-center gap-2">
+                            <span>➕</span> 더하기 (Combine)
+                        </h4>
+                    </div>
+                    <div class="p-4">
+                        <div class="bg-gray-50 p-3 rounded-lg mb-3 border border-gray-200">
+                            <div class="text-xs font-medium text-gray-600 mb-1">📌 예시</div>
+                            <div class="text-sm text-gray-700 mb-2">
+                                <strong>물건 예시:</strong> 연필꽂이 + 집게 = 연필이 안 떨어지는 연필꽂이
+                            </div>
+                            <div class="bg-indigo-50 p-2 rounded border border-indigo-200">
+                                <div class="text-xs font-medium text-indigo-800 mb-1">AI 프롬프트 예시:</div>
+                                <div class="text-sm text-indigo-700">"우산 알리미 앱에 <strong>날씨 알람 기능</strong>을 더해줘."</div>
+                            </div>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                            <label class="block text-xs font-medium text-gray-700 mb-2">✏️ 나의 아이디어와 AI 프롬프트</label>
+                            <div class="mb-2">
+                                <input type="text" class="w-full p-2 border border-gray-300 rounded-md text-sm mb-1" placeholder="무엇 + 무엇 = 새로운 아이디어">
+                            </div>
+                            <textarea rows="2" class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="AI에게 입력할 프롬프트를 작성하세요. 예: OO 앱에 OO 기능을 더해줘."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Technique 2: Put to other use (용도 바꾸기) -->
+                <div class="border-2 border-green-200 rounded-lg overflow-hidden">
+                    <div class="bg-green-100 px-4 py-3 border-b border-green-200">
+                        <h4 class="font-bold text-green-900 flex items-center gap-2">
+                            <span>🔄</span> 용도 바꾸기 (Put to other use)
+                        </h4>
+                    </div>
+                    <div class="p-4">
+                        <div class="bg-gray-50 p-3 rounded-lg mb-3 border border-gray-200">
+                            <div class="text-xs font-medium text-gray-600 mb-1">📌 예시</div>
+                            <div class="text-sm text-gray-700 mb-2">
+                                <strong>물건 예시:</strong> 페트병 → 우산꽂이 (음료수병을 다른 용도로 활용)
+                            </div>
+                            <div class="bg-green-50 p-2 rounded border border-green-200">
+                                <div class="text-xs font-medium text-green-800 mb-1">AI 프롬프트 예시:</div>
+                                <div class="text-sm text-green-700">"원래 공부용인 타이머 앱을 <strong>'양치질 게임'</strong>으로 바꿔줘."</div>
+                            </div>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                            <label class="block text-xs font-medium text-gray-700 mb-2">✏️ 나의 아이디어와 AI 프롬프트</label>
+                            <div class="mb-2">
+                                <input type="text" class="w-full p-2 border border-gray-300 rounded-md text-sm mb-1" placeholder="원래 용도 → 새로운 용도">
+                            </div>
+                            <textarea rows="2" class="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-sm" placeholder="AI에게 입력할 프롬프트를 작성하세요. 예: 원래 OO용인 앱을 OO로 바꿔줘."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Technique 3: Eliminate (제거하기) -->
+                <div class="border-2 border-red-200 rounded-lg overflow-hidden">
+                    <div class="bg-red-100 px-4 py-3 border-b border-red-200">
+                        <h4 class="font-bold text-red-900 flex items-center gap-2">
+                            <span>➖</span> 제거하기 (Eliminate)
+                        </h4>
+                    </div>
+                    <div class="p-4">
+                        <div class="bg-gray-50 p-3 rounded-lg mb-3 border border-gray-200">
+                            <div class="text-xs font-medium text-gray-600 mb-1">📌 예시</div>
+                            <div class="text-sm text-gray-700 mb-2">
+                                <strong>물건 예시:</strong> 복잡한 리모컨 → 버튼 3개만 남긴 간단한 리모컨
+                            </div>
+                            <div class="bg-red-50 p-2 rounded border border-red-200">
+                                <div class="text-xs font-medium text-red-800 mb-1">AI 프롬프트 예시:</div>
+                                <div class="text-sm text-red-700">"어르신을 위해 <strong>복잡한 메뉴를 없애고</strong> 큰 버튼 하나만 남겨줘."</div>
+                            </div>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                            <label class="block text-xs font-medium text-gray-700 mb-2">✏️ 나의 아이디어와 AI 프롬프트</label>
+                            <div class="mb-2">
+                                <input type="text" class="w-full p-2 border border-gray-300 rounded-md text-sm mb-1" placeholder="무엇을 제거할까요?">
+                            </div>
+                            <textarea rows="2" class="w-full p-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 text-sm" placeholder="AI에게 입력할 프롬프트를 작성하세요. 예: OO를 없애고 OO만 남겨줘."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional SCAMPER Techniques -->
+                <div class="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
+                    <h4 class="font-bold text-purple-900 mb-3 flex items-center gap-2">
+                        <span>🎨</span> 다른 SCAMPER 기법도 시도해보세요!
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div class="bg-white p-3 rounded border border-purple-200">
+                            <strong class="text-purple-800">Substitute (대체하기):</strong>
+                            <p class="text-gray-600 text-xs mt-1">"플라스틱 대신 나무로 만들어줘"</p>
+                        </div>
+                        <div class="bg-white p-3 rounded border border-purple-200">
+                            <strong class="text-purple-800">Adapt (응용하기):</strong>
+                            <p class="text-gray-600 text-xs mt-1">"게임의 레벨 시스템을 공부 앱에 적용해줘"</p>
+                        </div>
+                        <div class="bg-white p-3 rounded border border-purple-200">
+                            <strong class="text-purple-800">Modify (변형하기):</strong>
+                            <p class="text-gray-600 text-xs mt-1">"크기를 2배 크게 만들어줘"</p>
+                        </div>
+                        <div class="bg-white p-3 rounded border border-purple-200">
+                            <strong class="text-purple-800">Reverse (반대로):</strong>
+                            <p class="text-gray-600 text-xs mt-1">"사용자가 질문하는 게 아니라 AI가 질문하게 해줘"</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: 아이디어 비교 및 특징 평가 -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>⚖️</span> 2. 아이디어 비교 및 특징 평가
+            </h3>
+            <p class="text-sm text-gray-600 mb-4">
+                AI가 제안한 여러 아이디어 중 2가지를 골라 특징을 비교해 보세요.
+            </p>
+
+            <!-- Idea Comparison Table -->
+            <div class="overflow-x-auto mb-6">
+                <table class="min-w-full border-collapse border border-gray-300">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="border border-gray-300 px-4 py-3 text-left text-sm font-bold text-gray-700">평가 항목</th>
+                            <th class="border border-gray-300 px-4 py-3 text-center text-sm font-bold text-blue-700">아이디어 1</th>
+                            <th class="border border-gray-300 px-4 py-3 text-center text-sm font-bold text-orange-700">아이디어 2</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="border border-gray-300 px-4 py-3 bg-gray-50 font-medium text-sm">아이디어 이름</td>
+                            <td class="border border-gray-300 px-4 py-3">
+                                <input type="text" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="예: 스마트 우산꽂이">
+                            </td>
+                            <td class="border border-gray-300 px-4 py-3">
+                                <input type="text" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="예: 양치질 게임 타이머">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-300 px-4 py-3 bg-gray-50 font-medium text-sm">주요 특징</td>
+                            <td class="border border-gray-300 px-4 py-3">
+                                <textarea rows="2" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="어떤 특징이 있나요?"></textarea>
+                            </td>
+                            <td class="border border-gray-300 px-4 py-3">
+                                <textarea rows="2" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="어떤 특징이 있나요?"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-300 px-4 py-3 bg-gray-50 font-medium text-sm">창의성 (1~10점)</td>
+                            <td class="border border-gray-300 px-4 py-3 text-center">
+                                <input type="number" min="1" max="10" class="w-20 p-2 border border-gray-300 rounded text-sm text-center" placeholder="점수">
+                            </td>
+                            <td class="border border-gray-300 px-4 py-3 text-center">
+                                <input type="number" min="1" max="10" class="w-20 p-2 border border-gray-300 rounded text-sm text-center" placeholder="점수">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-300 px-4 py-3 bg-gray-50 font-medium text-sm">따뜻함/나눔 (1~10점)</td>
+                            <td class="border border-gray-300 px-4 py-3 text-center">
+                                <input type="number" min="1" max="10" class="w-20 p-2 border border-gray-300 rounded text-sm text-center" placeholder="점수">
+                            </td>
+                            <td class="border border-gray-300 px-4 py-3 text-center">
+                                <input type="number" min="1" max="10" class="w-20 p-2 border border-gray-300 rounded text-sm text-center" placeholder="점수">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-300 px-4 py-3 bg-gray-50 font-medium text-sm">실현 가능성 (1~10점)</td>
+                            <td class="border border-gray-300 px-4 py-3 text-center">
+                                <input type="number" min="1" max="10" class="w-20 p-2 border border-gray-300 rounded text-sm text-center" placeholder="점수">
+                            </td>
+                            <td class="border border-gray-300 px-4 py-3 text-center">
+                                <input type="number" min="1" max="10" class="w-20 p-2 border border-gray-300 rounded text-sm text-center" placeholder="점수">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Visual Chart -->
+            <div class="bg-gradient-to-br from-blue-50 to-orange-50 p-5 rounded-lg border border-gray-200 mb-6">
+                <h4 class="text-sm font-bold text-gray-900 mb-3 text-center">📊 아이디어 비교 차트</h4>
+                <div class="chart-container">
+                    <canvas id="ideaChart"></canvas>
+                </div>
+                <div class="mt-3 text-center">
+                    <span class="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full mr-2">■ 아이디어 1</span>
+                    <span class="inline-block px-3 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">■ 아이디어 2</span>
+                </div>
+            </div>
+
+            <!-- Final Selection -->
+            <div class="bg-green-50 p-5 rounded-lg border-2 border-green-300">
+                <h4 class="font-bold text-green-900 mb-3 flex items-center gap-2">
+                    <span>✅</span> 최종 선택 및 이유
+                </h4>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">선택한 아이디어</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="final-idea" value="1" class="mr-2">
+                                <span class="text-sm">아이디어 1</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="final-idea" value="2" class="mr-2">
+                                <span class="text-sm">아이디어 2</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">선택 이유</label>
+                        <textarea rows="3" class="w-full p-3 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-sm" placeholder="예: 재활용품을 활용할 수 있고, 가장 따뜻한 기술이라서 선택했습니다."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">어떤 기준이 가장 중요했나요?</label>
+                        <div class="flex flex-wrap gap-2">
+                            <label class="inline-flex items-center px-3 py-1 bg-white border border-gray-300 rounded-full text-sm cursor-pointer hover:bg-gray-50">
+                                <input type="checkbox" class="mr-2">편리함
+                            </label>
+                            <label class="inline-flex items-center px-3 py-1 bg-white border border-gray-300 rounded-full text-sm cursor-pointer hover:bg-gray-50">
+                                <input type="checkbox" class="mr-2">나눔/공유
+                            </label>
+                            <label class="inline-flex items-center px-3 py-1 bg-white border border-gray-300 rounded-full text-sm cursor-pointer hover:bg-gray-50">
+                                <input type="checkbox" class="mr-2">창의성
+                            </label>
+                            <label class="inline-flex items-center px-3 py-1 bg-white border border-gray-300 rounded-full text-sm cursor-pointer hover:bg-gray-50">
+                                <input type="checkbox" class="mr-2">만들기 쉬움
+                            </label>
+                            <label class="inline-flex items-center px-3 py-1 bg-white border border-gray-300 rounded-full text-sm cursor-pointer hover:bg-gray-50">
+                                <input type="checkbox" class="mr-2">환경 보호
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reflection Journal for Step 2 -->
+        <div class="mt-8 bg-white rounded-xl shadow p-6 border-l-4 border-yellow-500">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>💡</span> [3~4차시 성찰] 상상의 확장
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">📚 배운 점</label>
+                    <p class="text-xs text-gray-600 mb-2 italic">사고 기법(SCAMPER)을 사용할 때 아이디어가 어떻게 더 구체적으로 변했나요?</p>
+                    <textarea class="w-full p-3 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-sm" rows="3" placeholder="SCAMPER 기법을 사용하기 전과 후의 변화를 적어보세요..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">💭 느낀 점</label>
+                    <p class="text-xs text-gray-600 mb-2 italic">여러 아이디어 중 하나를 선택할 때 어떤 기준(편리함, 나눔 등)이 가장 중요했나요?</p>
+                    <textarea class="w-full p-3 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-sm" rows="3" placeholder="아이디어를 평가하고 선택하면서 느낀 점을 자유롭게 적어보세요..."></textarea>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Step 3: Blueprint (Prompt Engineering) -->
+    <section id="step-3" class="step-content">
+        <div class="mb-8 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+            <h2 class="text-2xl font-bold text-blue-800 mb-2">활동지 3: 마스터 프롬프트 설계도 (4~5차시)</h2>
+            <p class="text-blue-700 italic text-lg">
+                "AI 비서에게 명확한 '역할'과 '임무'를 부여합니다."
+            </p>
+        </div>
+
+        <!-- Section 1: 프롬프트 구조화 -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>🏗️</span> 1. 프롬프트 구조화 (Role - Task - Constraint)
+            </h3>
+            <p class="text-sm text-gray-600 mb-6">
+                AI에게 명확한 지시를 내리기 위해서는 <strong>역할(Role)</strong>, <strong>작업(Task)</strong>, <strong>규칙(Constraint)</strong>을 
+                구체적으로 작성해야 합니다.
+            </p>
+
+            <!-- Role Section -->
+            <div class="mb-6">
+                <div class="bg-purple-100 px-4 py-3 rounded-t-lg border-b-2 border-purple-300">
+                    <h4 class="font-bold text-purple-900 flex items-center gap-2">
+                        <span>👤</span> 역할 (Role) - AI는 누구인가요?
+                    </h4>
+                </div>
+                <div class="bg-purple-50 p-5 rounded-b-lg border border-purple-200">
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-700 mb-3">
+                            <strong>💡 설명:</strong> AI에게 어떤 전문가 역할을 맡길지 정합니다. 
+                            역할을 명확히 하면 AI가 그에 맞는 답변과 코드를 생성합니다.
+                        </p>
+                        <div class="bg-white p-3 rounded border border-purple-300 mb-3">
+                            <div class="text-xs font-medium text-purple-800 mb-1">📌 예시</div>
+                            <p class="text-sm text-gray-700">"너는 어린이를 위한 <strong>식습관 전문가</strong>이자 다정한 코딩 파트너야."</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-4 rounded-lg border-2 border-blue-300">
+                        <label class="block text-sm font-bold text-gray-800 mb-2">✏️ 나의 역할 설정</label>
+                        <div class="mb-3">
+                            <p class="text-sm text-gray-700 mb-2">너는 어린이를 위한</p>
+                            <input type="text" id="prompt-role-field" class="w-full p-3 border-2 border-blue-400 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm font-medium" placeholder="예: 환경 보호 전문가, 건강 관리 도우미, 안전 교육 전문가 등">
+                            <p class="text-sm text-gray-700 mt-2">이자 다정한 코딩 파트너야.</p>
+                        </div>
+                        <p class="text-xs text-gray-500 italic">💬 힌트: 내가 만들려는 앱과 관련된 전문가를 적어보세요!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Section -->
+            <div class="mb-6">
+                <div class="bg-green-100 px-4 py-3 rounded-t-lg border-b-2 border-green-300">
+                    <h4 class="font-bold text-green-900 flex items-center gap-2">
+                        <span>🎯</span> 작업 (Task) - AI가 무엇을 만들어야 하나요?
+                    </h4>
+                </div>
+                <div class="bg-green-50 p-5 rounded-b-lg border border-green-200">
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-700 mb-3">
+                            <strong>💡 설명:</strong> AI가 구체적으로 어떤 앱(프로그램)을 만들어야 하는지 설명합니다. 
+                            해결하려는 문제와 앱의 기능을 명확히 적어주세요.
+                        </p>
+                        <div class="bg-white p-3 rounded border border-green-300 mb-3">
+                            <div class="text-xs font-medium text-green-800 mb-1">📌 예시</div>
+                            <p class="text-sm text-gray-700">"사용자가 <strong>편식 습관</strong>을 고칠 수 있게 돕는 <strong>퀴즈 웹 앱</strong>을 만들 거야."</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-4 rounded-lg border-2 border-blue-300">
+                        <label class="block text-sm font-bold text-gray-800 mb-2">✏️ 나의 작업 설정</label>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-sm text-gray-700 font-medium">사용자가</label>
+                                <input type="text" id="prompt-task-problem" class="w-full p-3 border-2 border-blue-400 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm font-medium mt-1" placeholder="예: 우산을 쉽게 찾을, 양치질 습관을 기를">
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-700 font-medium">수 있게 돕는</label>
+                                <input type="text" id="prompt-task-type" class="w-full p-3 border-2 border-blue-400 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm font-medium mt-1" placeholder="예: 알림 앱, 게임 앱, 타이머 앱, 지도 앱">
+                            </div>
+                            <p class="text-sm text-gray-700 font-medium">을(를) 만들 거야.</p>
+                        </div>
+                        <p class="text-xs text-gray-500 italic mt-3">💬 힌트: 1단계에서 찾은 문제를 떠올려보세요!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Constraint Section -->
+            <div class="mb-6">
+                <div class="bg-orange-100 px-4 py-3 rounded-t-lg border-b-2 border-orange-300">
+                    <h4 class="font-bold text-orange-900 flex items-center gap-2">
+                        <span>📏</span> 규칙 (Constraint) - 어떤 디자인과 기능으로 만들까요?
+                    </h4>
+                </div>
+                <div class="bg-orange-50 p-5 rounded-b-lg border border-orange-200">
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-700 mb-3">
+                            <strong>💡 설명:</strong> 앱의 디자인, 색상, 크기, 기능 등 구체적인 요구사항을 적습니다. 
+                            제약조건을 명확히 하면 내가 원하는 모습에 더 가까운 결과가 나옵니다.
+                        </p>
+                        <div class="bg-white p-3 rounded border border-orange-300 mb-3">
+                            <div class="text-xs font-medium text-orange-800 mb-1">📌 예시</div>
+                            <p class="text-sm text-gray-700">"글자는 아주 크게, 색상은 따뜻한 느낌으로, 버튼은 3개 이내로 만들어 줘."</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-4 rounded-lg border-2 border-blue-300">
+                        <label class="block text-sm font-bold text-gray-800 mb-3">✏️ 나의 규칙 설정</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                            <div>
+                                <label class="text-xs text-gray-600">글자 크기</label>
+                                <select class="w-full p-2 border border-gray-300 rounded text-sm mt-1">
+                                    <option>아주 크게</option>
+                                    <option>크게</option>
+                                    <option>보통</option>
+                                    <option>작게</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600">색상 느낌</label>
+                                <select class="w-full p-2 border border-gray-300 rounded text-sm mt-1">
+                                    <option>따뜻한 느낌 (주황, 노랑)</option>
+                                    <option>시원한 느낌 (파랑, 초록)</option>
+                                    <option>밝은 느낌 (흰색, 연한색)</option>
+                                    <option>차분한 느낌 (회색, 베이지)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600">버튼 개수</label>
+                                <select class="w-full p-2 border border-gray-300 rounded text-sm mt-1">
+                                    <option>3개 이내</option>
+                                    <option>5개 이내</option>
+                                    <option>많이 (제한 없음)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600">특수 기능</label>
+                                <select class="w-full p-2 border border-gray-300 rounded text-sm mt-1">
+                                    <option>없음</option>
+                                    <option>소리/음악 재생</option>
+                                    <option>타이머/알람</option>
+                                    <option>점수 기록</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-600 mb-1 block">추가 요구사항 (자유롭게 작성)</label>
+                            <textarea id="prompt-constraint-extra" rows="2" class="w-full p-3 border-2 border-blue-400 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="예: 귀여운 캐릭터를 넣어줘, 애니메이션 효과를 넣어줘, 간단하고 직관적으로 만들어줘"></textarea>
+                        </div>
+                        <p class="text-xs text-gray-500 italic mt-2">💬 힌트: 누가 사용할지 생각하며 적어보세요 (어린이, 어르신 등)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: 마스터 프롬프트 통합 -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>⚡</span> 2. 마스터 프롬프트 통합
+            </h3>
+            <p class="text-sm text-gray-600 mb-4">
+                위 내용을 합쳐 AI Studio에 입력할 최종 문장을 작성하고, 생성된 코드를 확인하세요.
+            </p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Left: Generate Button -->
+                <div class="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-lg border-2 border-blue-300">
+                    <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <span>🎨</span> 프롬프트 생성기
+                    </h4>
+                    <p class="text-sm text-gray-600 mb-4">
+                        위에서 작성한 내용을 바탕으로 자동으로 프롬프트를 만들어드립니다.
+                    </p>
+                    <button onclick="generateMasterPrompt()" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-lg hover:from-blue-600 hover:to-purple-700 transition duration-300 font-bold shadow-lg text-sm">
+                        ✨ 마스터 프롬프트 생성하기
+                    </button>
+                    
+                    <div class="mt-6 bg-white p-4 rounded-lg border border-blue-200">
+                        <h5 class="text-xs font-bold text-gray-700 mb-2">📋 사용 방법</h5>
+                        <ol class="text-xs text-gray-600 space-y-1 list-decimal list-inside">
+                            <li>위의 역할, 작업, 규칙을 모두 입력하세요</li>
+                            <li>"마스터 프롬프트 생성하기" 버튼을 클릭하세요</li>
+                            <li>오른쪽에 나타난 프롬프트를 복사하세요</li>
+                            <li>AI Studio (Claude, ChatGPT 등)에 붙여넣으세요</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- Right: Result Display -->
+                <div class="bg-gray-900 rounded-lg shadow-lg p-6 border-2 border-gray-700 flex flex-col">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-bold text-gray-200 flex items-center gap-2">
+                            <span>📟</span> 최종 마스터 프롬프트
+                        </h4>
+                        <button onclick="copyPrompt()" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition">
+                            📋 복사
+                        </button>
+                    </div>
+                    
+                    <div class="bg-gray-800 p-4 rounded-lg flex-grow border border-gray-600 font-mono text-sm leading-relaxed overflow-y-auto min-h-[300px]" id="master-prompt-display">
+                        <span class="text-gray-500">// 여기에 생성된 프롬프트가 표시됩니다.</span>
+                        <br><br>
+                        <span class="text-gray-600">위의 입력창에 내용을 채우고<br>"마스터 프롬프트 생성하기" 버튼을 눌러보세요.</span>
+                    </div>
+                    
+                    <div class="mt-4 flex items-start gap-2 text-xs text-gray-400">
+                        <span>💡</span>
+                        <p>이 프롬프트를 AI Studio에 입력하면 웹 앱 코드가 생성됩니다!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example Prompts -->
+            <div class="mt-6 bg-teal-50 p-5 rounded-lg border border-teal-200">
+                <h4 class="font-bold text-teal-900 mb-3 flex items-center gap-2">
+                    <span>💬</span> 프롬프트 예시 모음
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="bg-white p-3 rounded border border-teal-300 text-sm">
+                        <div class="font-bold text-teal-800 mb-1">우산 찾기 앱</div>
+                        <p class="text-xs text-gray-600">"너는 초등학생을 위한 스마트 IoT 전문가야. 비오는 날 학교 우산꽂이에서 내 우산을 쉽게 찾을 수 있는 알림 앱을 만들어줘. 글자는 크게, 색상은 밝은 파란색으로, 버튼은 2개만 만들어줘."</p>
+                    </div>
+                    <div class="bg-white p-3 rounded border border-teal-300 text-sm">
+                        <div class="font-bold text-teal-800 mb-1">양치질 타이머 앱</div>
+                        <p class="text-xs text-gray-600">"너는 어린이 건강 관리 전문가야. 아이들이 3분 동안 재미있게 양치질할 수 있도록 돕는 게임 타이머 앱을 만들어줘. 귀여운 캐릭터를 넣고, 색상은 민트색으로, 소리 효과도 넣어줘."</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reflection Journal for Step 3 -->
+        <div class="mt-8 bg-white rounded-xl shadow p-6 border-l-4 border-blue-500">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>💬</span> [4~5차시 성찰] 소통과 협업
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">📚 배운 점</label>
+                    <p class="text-xs text-gray-600 mb-2 italic">AI에게 내 생각을 정확히 전달하기 위해 프롬프트에서 가장 중요하게 강조한 단어는 무엇인가요?</p>
+                    <textarea class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" rows="3" placeholder="예: '어린이를 위한', '아주 크게', '3개 이내' 같은 구체적인 표현을 사용했습니다..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">💭 느낀 점</label>
+                    <p class="text-xs text-gray-600 mb-2 italic">내가 쓴 글이 실제 버튼과 화면으로 변했을 때 어떤 기분이 들었나요?</p>
+                    <textarea class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" rows="3" placeholder="내가 상상한 것이 눈앞에 나타났을 때의 느낌을 자유롭게 적어보세요..."></textarea>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Step 4: Improvement (Debugging) -->
+    <section id="step-4" class="step-content">
+        <div class="mb-8 bg-purple-50 border-l-4 border-purple-500 p-4 rounded-r-lg">
+            <h2 class="text-2xl font-bold text-purple-800 mb-2">활동지 4: 버그 사냥 및 개선 리포트 (6~7차시)</h2>
+            <p class="text-purple-700 italic text-lg">
+                "친구의 눈으로 바라보면 더 완벽한 발명품이 됩니다."
+            </p>
+        </div>
+
+        <!-- Section 1: 기술적 문제 해결 (디버깅) -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>🐛</span> 1. 기술적 문제 해결 (디버깅)
+            </h3>
+            <p class="text-sm text-gray-600 mb-6">
+                작동하지 않거나 어색한 부분(버그)을 찾아 AI에게 질문하세요.
+            </p>
+
+            <!-- What is a Bug? -->
+            <div class="bg-red-50 p-5 rounded-lg border-2 border-red-200 mb-6">
+                <h4 class="font-bold text-red-900 mb-3 flex items-center gap-2">
+                    <span>❓</span> 버그(Bug)란 무엇인가요?
+                </h4>
+                <p class="text-sm text-gray-700 mb-3">
+                    버그는 프로그램에서 예상대로 작동하지 않는 문제를 말합니다. 
+                    모든 개발자는 버그를 만나게 되며, 이를 해결하는 과정에서 더 성장합니다!
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="bg-white p-3 rounded border border-red-300">
+                        <div class="text-sm font-bold text-red-800 mb-1">기능 버그</div>
+                        <p class="text-xs text-gray-600">버튼을 눌러도 아무 일도 안 일어남</p>
+                    </div>
+                    <div class="bg-white p-3 rounded border border-red-300">
+                        <div class="text-sm font-bold text-red-800 mb-1">디자인 버그</div>
+                        <p class="text-xs text-gray-600">글자가 너무 작아서 안 보임</p>
+                    </div>
+                    <div class="bg-white p-3 rounded border border-red-300">
+                        <div class="text-sm font-bold text-red-800 mb-1">내용 버그</div>
+                        <p class="text-xs text-gray-600">잘못된 정보가 표시됨</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bug Hunting Table -->
+            <div class="mb-6">
+                <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <span>🔍</span> 버그 사냥 일지
+                </h4>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border-collapse border-2 border-gray-300">
+                        <thead>
+                            <tr class="bg-gradient-to-r from-purple-100 to-pink-100">
+                                <th class="border border-gray-300 px-4 py-3 text-left text-sm font-bold text-gray-800 w-1/4">발견한 버그</th>
+                                <th class="border border-gray-300 px-4 py-3 text-left text-sm font-bold text-gray-800 w-1/3">AI에게 한 질문</th>
+                                <th class="border border-gray-300 px-4 py-3 text-left text-sm font-bold text-gray-800 w-1/3">AI의 해결책</th>
+                                <th class="border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-800 w-1/12">해결</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bug-table-body">
+                            <!-- Example Row -->
+                            <tr class="bg-gray-50">
+                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-600">
+                                    <div class="italic text-xs text-gray-500 mb-1">📌 예시</div>
+                                    버튼을 눌러도 소리가 안 나요
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-600">
+                                    "버튼 클릭 시 소리가 나도록 수정해줘"
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-600">
+                                    Audio 태그를 추가하고 onclick 이벤트에 play() 함수를 연결했습니다
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-center">
+                                    <span class="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">✓</span>
+                                </td>
+                            </tr>
+                            <!-- Input Row 1 -->
+                            <tr>
+                                <td class="border border-gray-300 px-4 py-3">
+                                    <textarea rows="2" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="어떤 문제를 발견했나요?"></textarea>
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3">
+                                    <textarea rows="2" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="AI에게 어떻게 질문했나요?"></textarea>
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3">
+                                    <textarea rows="2" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="AI가 어떤 해결책을 제시했나요?"></textarea>
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-center align-middle">
+                                    <input type="checkbox" class="w-5 h-5">
+                                </td>
+                            </tr>
+                            <!-- Input Row 2 -->
+                            <tr>
+                                <td class="border border-gray-300 px-4 py-3">
+                                    <textarea rows="2" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="어떤 문제를 발견했나요?"></textarea>
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3">
+                                    <textarea rows="2" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="AI에게 어떻게 질문했나요?"></textarea>
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3">
+                                    <textarea rows="2" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="AI가 어떤 해결책을 제시했나요?"></textarea>
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-center align-middle">
+                                    <input type="checkbox" class="w-5 h-5">
+                                </td>
+                            </tr>
+                            <!-- Input Row 3 -->
+                            <tr>
+                                <td class="border border-gray-300 px-4 py-3">
+                                    <textarea rows="2" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="어떤 문제를 발견했나요?"></textarea>
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3">
+                                    <textarea rows="2" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="AI에게 어떻게 질문했나요?"></textarea>
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3">
+                                    <textarea rows="2" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="AI가 어떤 해결책을 제시했나요?"></textarea>
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-center align-middle">
+                                    <input type="checkbox" class="w-5 h-5">
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button onclick="addBugRow()" class="mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition shadow-sm">
+                    ➕ 버그 기록 추가하기
+                </button>
+            </div>
+
+            <!-- Debugging Tips -->
+            <div class="bg-blue-50 p-5 rounded-lg border border-blue-200">
+                <h4 class="font-bold text-blue-900 mb-3 flex items-center gap-2">
+                    <span>💡</span> 디버깅 팁
+                </h4>
+                <ul class="space-y-2 text-sm text-gray-700">
+                    <li class="flex items-start gap-2">
+                        <span class="text-blue-600 font-bold">1.</span>
+                        <span><strong>문제를 구체적으로 설명하세요:</strong> "안 돼요" 보다는 "버튼을 눌렀을 때 소리가 나지 않아요"가 더 좋습니다.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-blue-600 font-bold">2.</span>
+                        <span><strong>AI에게 단계별로 물어보세요:</strong> 한 번에 모든 것을 고치려 하지 말고, 한 가지씩 해결하세요.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-blue-600 font-bold">3.</span>
+                        <span><strong>포기하지 마세요:</strong> 모든 개발자는 버그를 만나며, 이를 해결하며 성장합니다!</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 2: 동료 피드백 (G.G.G) -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>👥</span> 2. 동료 피드백 (G.G.G)
+            </h3>
+            <p class="text-sm text-gray-600 mb-6">
+                친구들의 의견을 듣고 내 발명품을 더 '따뜻하게' 고쳐봅시다.
+            </p>
+
+            <!-- G.G.G Explanation -->
+            <div class="bg-gradient-to-r from-green-50 to-blue-50 p-5 rounded-lg border-2 border-green-300 mb-6">
+                <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <span>📖</span> G.G.G 피드백이란?
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white p-4 rounded-lg border border-green-200">
+                        <div class="text-2xl mb-2">👍</div>
+                        <div class="font-bold text-green-800 mb-1">Good (좋은 점)</div>
+                        <p class="text-xs text-gray-600">친구가 만든 것 중 마음에 드는 부분을 찾아 칭찬해주세요</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border border-blue-200">
+                        <div class="text-2xl mb-2">⭐</div>
+                        <div class="font-bold text-blue-800 mb-1">Great (놀라운 점)</div>
+                        <p class="text-xs text-gray-600">특별히 창의적이거나 인상 깊었던 부분을 알려주세요</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border border-orange-200">
+                        <div class="text-2xl mb-2">🌱</div>
+                        <div class="font-bold text-orange-800 mb-1">Grown (개선할 점)</div>
+                        <p class="text-xs text-gray-600">더 좋아질 수 있는 부분을 조심스럽게 제안해주세요</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- G.G.G Feedback Cards -->
+            <div class="space-y-4 mb-6">
+                <!-- Good -->
+                <div class="border-2 border-green-300 rounded-lg overflow-hidden">
+                    <div class="bg-green-100 px-4 py-3 border-b border-green-300">
+                        <h4 class="font-bold text-green-900 flex items-center gap-2">
+                            <span>👍</span> Good (좋은 점)
+                        </h4>
+                    </div>
+                    <div class="p-5 bg-green-50">
+                        <div class="mb-4">
+                            <div class="bg-white p-3 rounded border border-green-200 mb-3">
+                                <div class="text-xs font-medium text-green-800 mb-1">📌 예시</div>
+                                <p class="text-sm text-gray-700">"글씨가 커서 보기 편해요!", "색깔이 예뻐요!", "버튼이 찾기 쉬워요!"</p>
+                            </div>
+                        </div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">친구 1의 칭찬</label>
+                        <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-sm mb-3" placeholder="친구가 내 발명품에서 좋았다고 말한 점을 적어보세요..."></textarea>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">친구 2의 칭찬</label>
+                        <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-sm" placeholder="또 다른 친구의 칭찬을 적어보세요..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Great -->
+                <div class="border-2 border-blue-300 rounded-lg overflow-hidden">
+                    <div class="bg-blue-100 px-4 py-3 border-b border-blue-300">
+                        <h4 class="font-bold text-blue-900 flex items-center gap-2">
+                            <span>⭐</span> Great (놀라운 점)
+                        </h4>
+                    </div>
+                    <div class="p-5 bg-blue-50">
+                        <div class="mb-4">
+                            <div class="bg-white p-3 rounded border border-blue-200 mb-3">
+                                <div class="text-xs font-medium text-blue-800 mb-1">📌 예시</div>
+                                <p class="text-sm text-gray-700">"타이머 소리가 진짜 같아요!", "이런 아이디어는 처음 봤어요!", "정말 유용할 것 같아요!"</p>
+                            </div>
+                        </div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">친구 1의 감탄</label>
+                        <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm mb-3" placeholder="친구가 특별히 놀라워했던 점을 적어보세요..."></textarea>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">친구 2의 감탄</label>
+                        <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="또 다른 친구가 인상 깊어했던 점을 적어보세요..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Grown -->
+                <div class="border-2 border-orange-300 rounded-lg overflow-hidden">
+                    <div class="bg-orange-100 px-4 py-3 border-b border-orange-300">
+                        <h4 class="font-bold text-orange-900 flex items-center gap-2">
+                            <span>🌱</span> Grown (개선할 점)
+                        </h4>
+                    </div>
+                    <div class="p-5 bg-orange-50">
+                        <div class="mb-4">
+                            <div class="bg-white p-3 rounded border border-orange-200 mb-3">
+                                <div class="text-xs font-medium text-orange-800 mb-1">📌 예시</div>
+                                <p class="text-sm text-gray-700">"시작 버튼이 좀 더 컸으면 좋겠어요", "설명이 더 있으면 이해하기 쉬울 것 같아요"</p>
+                            </div>
+                        </div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">친구 1의 제안</label>
+                        <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500 text-sm mb-3" placeholder="친구가 개선하면 좋겠다고 제안한 점을 적어보세요..."></textarea>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">친구 2의 제안</label>
+                        <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500 text-sm" placeholder="또 다른 친구의 제안을 적어보세요..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Plan -->
+            <div class="bg-purple-50 p-5 rounded-lg border-2 border-purple-300">
+                <h4 class="font-bold text-purple-900 mb-3 flex items-center gap-2">
+                    <span>🎯</span> 개선 실행 계획
+                </h4>
+                <label class="block text-sm font-medium text-gray-700 mb-2">친구들의 제안 중 실제로 고쳐볼 것</label>
+                <textarea rows="3" class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 text-sm mb-3" placeholder="친구들의 Grown 피드백 중에서 실제로 적용해볼 개선사항을 선택하고 계획을 세워보세요..."></textarea>
+                <label class="block text-sm font-medium text-gray-700 mb-2">AI에게 요청할 수정 내용</label>
+                <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 text-sm" placeholder="예: 시작 버튼 크기를 2배로 키워줘, 상단에 사용 방법 설명을 추가해줘"></textarea>
+            </div>
+        </div>
+
+        <!-- Reflection Journal for Step 4 -->
+        <div class="mt-8 bg-white rounded-xl shadow p-6 border-l-4 border-purple-500">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>🛠️</span> [6~7차시 성찰] 끈기 있는 도전
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">📚 배운 점</label>
+                    <p class="text-xs text-gray-600 mb-2 italic">버그를 해결하면서 코딩이 작동하는 원리를 어떻게 이해하게 되었나요?</p>
+                    <textarea class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 text-sm" rows="3" placeholder="디버깅 과정에서 배운 코딩 원리나 문제 해결 방법을 적어보세요..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">💭 느낀 점</label>
+                    <p class="text-xs text-gray-600 mb-2 italic">친구의 피드백 중 가장 기억에 남는 제안은 무엇인가요?</p>
+                    <textarea class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 text-sm" rows="3" placeholder="친구들의 피드백을 받으면서 느낀 점과 가장 도움이 되었던 제안을 적어보세요..."></textarea>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Step 5: Reflection (Final) -->
+    <section id="step-5" class="step-content">
+        <div class="mb-8 bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-lg">
+            <h2 class="text-2xl font-bold text-indigo-800 mb-2">활동지 5: 프로젝트 최종 성찰 (8차시)</h2>
+            <p class="text-indigo-700 italic text-lg">
+                "기술을 넘어 마음을 전하는 발명가가 되었습니다."
+            </p>
+        </div>
+
+        <!-- Section 1: 발명의 가치 되새기기 -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>💝</span> 1. 발명의 가치 되새기기 (교과서 핵심 가치)
+            </h3>
+            <p class="text-sm text-gray-600 mb-6">
+                내가 만든 S/W 발명품이 우리 사회에 어떤 '나눔'과 '공유'의 가치를 줄 수 있을까요?
+            </p>
+
+            <!-- Value Reflection -->
+            <div class="bg-gradient-to-r from-pink-50 to-purple-50 p-6 rounded-lg border-2 border-pink-200 mb-6">
+                <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span>🌟</span> 내 발명품의 사회적 가치
+                </h4>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">내가 만든 S/W 발명품 이름</label>
+                        <input type="text" class="w-full p-3 border-2 border-pink-300 rounded-md focus:ring-pink-500 focus:border-pink-500 text-sm font-medium" placeholder="예: 따뜻한 우산 찾기 도우미">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">이 발명품이 누구에게 도움이 되나요?</label>
+                        <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500 text-sm" placeholder="예: 비 오는 날 우산을 잃어버려 걱정하는 친구들, 물건을 자주 잃어버리는 어린이들"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">어떤 '나눔'의 가치가 있나요?</label>
+                        <textarea rows="3" class="w-full p-3 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500 text-sm" placeholder="예: 다른 사람의 우산을 잘못 가져가는 실수를 줄여, 서로 배려하는 마음을 키울 수 있습니다."></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">어떤 '공유'의 가치가 있나요?</label>
+                        <textarea rows="3" class="w-full p-3 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500 text-sm" placeholder="예: 이 앱을 친구들과 함께 사용하면서 서로의 불편함을 이해하고, 더 나은 해결책을 함께 찾을 수 있습니다."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appropriate Technology Connection -->
+            <div class="bg-teal-50 p-5 rounded-lg border border-teal-200">
+                <h4 class="font-bold text-teal-900 mb-3 flex items-center gap-2">
+                    <span>🌿</span> 적정 기술과의 연결
+                </h4>
+                <p class="text-sm text-gray-700 mb-3">
+                    1단계에서 배운 '항아리 냉장고', '큐드럼'처럼, 내 발명품도 누군가에게 꼭 필요한 따뜻한 기술이 될 수 있습니다.
+                </p>
+                <textarea rows="3" class="w-full p-3 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm" placeholder="내 발명품이 적정 기술의 정신(지역 공동체를 위한, 나눔과 공유의 가치)을 어떻게 담고 있는지 적어보세요..."></textarea>
+            </div>
+        </div>
+
+        <!-- Section 2: 나의 역할 성찰 -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>🤝</span> 2. 나의 역할 성찰
+            </h3>
+            <p class="text-sm text-gray-600 mb-6">
+                AI와 함께 작업하면서 각자의 역할이 무엇이었는지 되돌아봅시다.
+            </p>
+
+            <!-- AI vs Me Comparison -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- AI's Role -->
+                <div class="border-2 border-blue-300 rounded-lg overflow-hidden">
+                    <div class="bg-blue-100 px-4 py-3 border-b border-blue-300">
+                        <h4 class="font-bold text-blue-900 flex items-center gap-2">
+                            <span>🤖</span> AI의 기여
+                        </h4>
+                    </div>
+                    <div class="p-5 bg-blue-50">
+                        <div class="mb-4">
+                            <div class="bg-white p-3 rounded border border-blue-200 mb-3">
+                                <div class="text-xs font-medium text-blue-800 mb-1">📌 예시</div>
+                                <ul class="text-sm text-gray-700 space-y-1 list-disc list-inside">
+                                    <li>복잡한 코드 작성</li>
+                                    <li>여러 아이디어 제안</li>
+                                    <li>버그 해결 방법 안내</li>
+                                    <li>디자인 코드 자동 생성</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">AI가 도와준 것들</label>
+                        <textarea rows="5" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="AI가 이 프로젝트에서 어떤 역할을 했는지 구체적으로 적어보세요..."></textarea>
+                    </div>
+                </div>
+
+                <!-- My Role -->
+                <div class="border-2 border-orange-300 rounded-lg overflow-hidden">
+                    <div class="bg-orange-100 px-4 py-3 border-b border-orange-300">
+                        <h4 class="font-bold text-orange-900 flex items-center gap-2">
+                            <span>👨‍💻</span> 나의 주도성
+                        </h4>
+                    </div>
+                    <div class="p-5 bg-orange-50">
+                        <div class="mb-4">
+                            <div class="bg-white p-3 rounded border border-orange-200 mb-3">
+                                <div class="text-xs font-medium text-orange-800 mb-1">📌 예시</div>
+                                <ul class="text-sm text-gray-700 space-y-1 list-disc list-inside">
+                                    <li>문제 상황 발견</li>
+                                    <li>핵심 기능 선택</li>
+                                    <li>최종 디자인 승인</li>
+                                    <li>사용자 관점에서 테스트</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">내가 주도한 것들</label>
+                        <textarea rows="5" class="w-full p-3 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500 text-sm" placeholder="내가 이 프로젝트에서 중요한 결정을 내린 순간들을 적어보세요..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collaboration Insight -->
+            <div class="bg-purple-50 p-5 rounded-lg border-2 border-purple-300">
+                <h4 class="font-bold text-purple-900 mb-3 flex items-center gap-2">
+                    <span>💡</span> AI와의 협업에서 깨달은 점
+                </h4>
+                <textarea rows="3" class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 text-sm" placeholder="AI와 함께 일하면서 느낀 점, AI가 잘하는 것과 내가 잘하는 것의 차이, 앞으로 AI를 어떻게 활용하면 좋을지 적어보세요..."></textarea>
+            </div>
+        </div>
+
+        <!-- Section 3: 나의 발명 태도 -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>🎯</span> 3. 나의 발명 태도
+            </h3>
+            <p class="text-sm text-gray-600 mb-6">
+                발명가로서 나의 태도를 되돌아보고, 각 항목을 1~5점으로 평가해봅시다.
+            </p>
+
+            <!-- Invention Attitude Assessment -->
+            <div class="space-y-4 mb-6">
+                <!-- 인지적 태도 -->
+                <div class="border-2 border-blue-200 rounded-lg overflow-hidden">
+                    <div class="bg-blue-100 px-5 py-3 border-b border-blue-300">
+                        <h4 class="font-bold text-blue-900 flex items-center gap-2">
+                            <span>🧠</span> 인지적 태도 (발명의 중요성과 가치 인식)
+                        </h4>
+                    </div>
+                    <div class="p-5 bg-blue-50">
+                        <p class="text-sm text-gray-700 mb-3">발명이 우리 사회와 삶에 얼마나 중요하다고 생각하나요?</p>
+                        <div class="flex items-center gap-4 mb-3">
+                            <input type="range" min="1" max="5" value="3" class="flex-grow h-2" id="attitude-cognitive">
+                            <span class="text-2xl font-bold text-blue-600 w-8" id="score-cognitive">3</span>
+                        </div>
+                        <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="발명의 가치에 대해 어떻게 생각하게 되었는지 적어보세요..."></textarea>
+                    </div>
+                </div>
+
+                <!-- 관심적 태도 -->
+                <div class="border-2 border-green-200 rounded-lg overflow-hidden">
+                    <div class="bg-green-100 px-5 py-3 border-b border-green-300">
+                        <h4 class="font-bold text-green-900 flex items-center gap-2">
+                            <span>🔍</span> 관심적 태도 (발명 활동에 대한 호기심)
+                        </h4>
+                    </div>
+                    <div class="p-5 bg-green-50">
+                        <p class="text-sm text-gray-700 mb-3">새로운 발명 아이디어를 생각하는 것이 재미있고 궁금한가요?</p>
+                        <div class="flex items-center gap-4 mb-3">
+                            <input type="range" min="1" max="5" value="3" class="flex-grow h-2" id="attitude-interest">
+                            <span class="text-2xl font-bold text-green-600 w-8" id="score-interest">3</span>
+                        </div>
+                        <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-sm" placeholder="발명 활동을 하면서 가장 흥미로웠던 순간은 언제였나요?"></textarea>
+                    </div>
+                </div>
+
+                <!-- 실천적 태도 -->
+                <div class="border-2 border-orange-200 rounded-lg overflow-hidden">
+                    <div class="bg-orange-100 px-5 py-3 border-b border-orange-300">
+                        <h4 class="font-bold text-orange-900 flex items-center gap-2">
+                            <span>💪</span> 실천적 태도 (아이디어를 실행하려는 의지)
+                        </h4>
+                    </div>
+                    <div class="p-5 bg-orange-50">
+                        <p class="text-sm text-gray-700 mb-3">생각한 아이디어를 실제로 만들어보려는 의지가 있나요?</p>
+                        <div class="flex items-center gap-4 mb-3">
+                            <input type="range" min="1" max="5" value="3" class="flex-grow h-2" id="attitude-action">
+                            <span class="text-2xl font-bold text-orange-600 w-8" id="score-action">3</span>
+                        </div>
+                        <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500 text-sm" placeholder="앞으로 실제로 만들어보고 싶은 것이 있나요?"></textarea>
+                    </div>
+                </div>
+
+                <!-- 정서적 태도 -->
+                <div class="border-2 border-purple-200 rounded-lg overflow-hidden">
+                    <div class="bg-purple-100 px-5 py-3 border-b border-purple-300">
+                        <h4 class="font-bold text-purple-900 flex items-center gap-2">
+                            <span>😊</span> 정서적 태도 (발명 활동에서의 즐거움)
+                        </h4>
+                    </div>
+                    <div class="p-5 bg-purple-50">
+                        <p class="text-sm text-gray-700 mb-3">발명 활동을 하면서 즐겁고 행복했나요?</p>
+                        <div class="flex items-center gap-4 mb-3">
+                            <input type="range" min="1" max="5" value="3" class="flex-grow h-2" id="attitude-emotion">
+                            <span class="text-2xl font-bold text-purple-600 w-8" id="score-emotion">3</span>
+                        </div>
+                        <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 text-sm" placeholder="가장 즐거웠던 활동은 무엇이었나요?"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attitude Summary Chart -->
+            <div class="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-lg border-2 border-indigo-200">
+                <h4 class="font-bold text-gray-900 mb-4 text-center flex items-center justify-center gap-2">
+                    <span>📊</span> 나의 발명 태도 종합
+                </h4>
+                <div class="chart-container" style="height: 280px;">
+                    <canvas id="attitudeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: 나의 창의적 문제 해결력 평가 -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>⚡</span> 4. 나의 창의적 문제 해결력 평가
+            </h3>
+            <p class="text-sm text-gray-600 mb-6">
+                문제를 창의적으로 해결하는 나의 능력을 평가해봅시다.
+            </p>
+
+            <!-- Creative Problem Solving Assessment -->
+            <div class="space-y-4 mb-6">
+                <!-- 자기 확신 및 독립성 -->
+                <div class="border-2 border-red-200 rounded-lg overflow-hidden">
+                    <div class="bg-red-100 px-5 py-3 border-b border-red-300">
+                        <h4 class="font-bold text-red-900 flex items-center gap-2">
+                            <span>💎</span> 자기 확신 및 독립성 (문제 해결에 대한 자신감)
+                        </h4>
+                    </div>
+                    <div class="p-5 bg-red-50">
+                        <p class="text-sm text-gray-700 mb-3">문제를 스스로 해결할 수 있다는 자신감이 생겼나요?</p>
+                        <div class="flex items-center gap-4 mb-3">
+                            <input type="range" min="1" max="5" value="3" class="flex-grow h-2" id="creative-confidence">
+                            <span class="text-2xl font-bold text-red-600 w-8" id="score-confidence">3</span>
+                        </div>
+                        <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 text-sm" placeholder="이 프로젝트를 통해 자신감이 어떻게 변했나요?"></textarea>
+                    </div>
+                </div>
+
+                <!-- 확산적 사고 -->
+                <div class="border-2 border-yellow-200 rounded-lg overflow-hidden">
+                    <div class="bg-yellow-100 px-5 py-3 border-b border-yellow-300">
+                        <h4 class="font-bold text-yellow-900 flex items-center gap-2">
+                            <span>🌈</span> 확산적 사고 (다양한 아이디어 생성 능력)
+                        </h4>
+                    </div>
+                    <div class="p-5 bg-yellow-50">
+                        <p class="text-sm text-gray-700 mb-3">하나의 문제에 대해 여러 가지 해결 방법을 생각할 수 있나요?</p>
+                        <div class="flex items-center gap-4 mb-3">
+                            <input type="range" min="1" max="5" value="3" class="flex-grow h-2" id="creative-divergent">
+                            <span class="text-2xl font-bold text-yellow-600 w-8" id="score-divergent">3</span>
+                        </div>
+                        <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-sm" placeholder="SCAMPER 같은 기법을 사용할 때 아이디어가 많이 떠올랐나요?"></textarea>
+                    </div>
+                </div>
+
+                <!-- 비판적·논리적 사고 -->
+                <div class="border-2 border-teal-200 rounded-lg overflow-hidden">
+                    <div class="bg-teal-100 px-5 py-3 border-b border-teal-300">
+                        <h4 class="font-bold text-teal-900 flex items-center gap-2">
+                            <span>🔬</span> 비판적·논리적 사고 (아이디어의 분석 및 평가 능력)
+                        </h4>
+                    </div>
+                    <div class="p-5 bg-teal-50">
+                        <p class="text-sm text-gray-700 mb-3">아이디어를 객관적으로 분석하고 좋은 것을 선택할 수 있나요?</p>
+                        <div class="flex items-center gap-4 mb-3">
+                            <input type="range" min="1" max="5" value="3" class="flex-grow h-2" id="creative-critical">
+                            <span class="text-2xl font-bold text-teal-600 w-8" id="score-critical">3</span>
+                        </div>
+                        <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-sm" placeholder="여러 아이디어 중 최선을 선택할 때 어떤 기준을 사용했나요?"></textarea>
+                    </div>
+                </div>
+
+                <!-- 동기적 요소 -->
+                <div class="border-2 border-pink-200 rounded-lg overflow-hidden">
+                    <div class="bg-pink-100 px-5 py-3 border-b border-pink-300">
+                        <h4 class="font-bold text-pink-900 flex items-center gap-2">
+                            <span>🔥</span> 동기적 요소 (과제 집착력 및 흥미)
+                        </h4>
+                    </div>
+                    <div class="p-5 bg-pink-50">
+                        <p class="text-sm text-gray-700 mb-3">어려움이 있어도 끝까지 해결하려는 열정이 있나요?</p>
+                        <div class="flex items-center gap-4 mb-3">
+                            <input type="range" min="1" max="5" value="3" class="flex-grow h-2" id="creative-motivation">
+                            <span class="text-2xl font-bold text-pink-600 w-8" id="score-motivation">3</span>
+                        </div>
+                        <textarea rows="2" class="w-full p-3 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500 text-sm" placeholder="버그를 해결할 때 포기하지 않고 계속 시도했나요?"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Creative Problem Solving Chart -->
+            <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-lg border-2 border-purple-200">
+                <h4 class="font-bold text-gray-900 mb-4 text-center flex items-center justify-center gap-2">
+                    <span>📊</span> 나의 창의적 문제 해결력 종합
+                </h4>
+                <div class="chart-container" style="height: 280px;">
+                    <canvas id="creativityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Growth Chart Section (기존 위치 유지) -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>📈</span> 5. 나의 발명가 역량 종합
+            </h3>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Example Chart -->
+                <div class="bg-white rounded-lg p-5 border-2 border-gray-200">
+                    <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                        <span>📊</span> 나의 발명가 역량 (예시)
+                    </h4>
+                    <p class="text-xs text-gray-600 mb-3">아래는 성장 그래프의 예시입니다.</p>
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="growthChartExample"></canvas>
+                    </div>
+                </div>
+
+                <!-- Interactive Chart -->
+                <div class="bg-indigo-50 rounded-lg p-5 border-2 border-indigo-300">
+                    <h4 class="font-bold text-indigo-900 mb-3 flex items-center gap-2">
+                        <span>✨</span> 나의 성장 그래프 (직접 입력)
+                    </h4>
+                    <p class="text-xs text-gray-600 mb-3">슬라이더를 움직여 자신을 평가해보세요!</p>
+                    
+                    <!-- Sliders -->
+                    <div class="space-y-2 mb-4">
+                        <div>
+                            <div class="flex justify-between text-xs">
+                                <label class="font-medium text-gray-700">관찰력</label>
+                                <span class="text-indigo-600 font-bold" id="score-observation">3</span>
+                            </div>
+                            <input type="range" min="1" max="5" value="3" class="w-full h-2" id="slider-observation" oninput="updateRadarChart()">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs">
+                                <label class="font-medium text-gray-700">AI 협업능력</label>
+                                <span class="text-indigo-600 font-bold" id="score-ai">3</span>
+                            </div>
+                            <input type="range" min="1" max="5" value="3" class="w-full h-2" id="slider-ai" oninput="updateRadarChart()">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs">
+                                <label class="font-medium text-gray-700">문제해결력</label>
+                                <span class="text-indigo-600 font-bold" id="score-problem">3</span>
+                            </div>
+                            <input type="range" min="1" max="5" value="3" class="w-full h-2" id="slider-problem" oninput="updateRadarChart()">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs">
+                                <label class="font-medium text-gray-700">끈기/도전</label>
+                                <span class="text-indigo-600 font-bold" id="score-persistence">3</span>
+                            </div>
+                            <input type="range" min="1" max="5" value="3" class="w-full h-2" id="slider-persistence" oninput="updateRadarChart()">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs">
+                                <label class="font-medium text-gray-700">공감능력</label>
+                                <span class="text-indigo-600 font-bold" id="score-empathy">3</span>
+                            </div>
+                            <input type="range" min="1" max="5" value="3" class="w-full h-2" id="slider-empathy" oninput="updateRadarChart()">
+                        </div>
+                    </div>
+
+                    <div class="chart-container" style="height: 200px;">
+                        <canvas id="growthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Final Declaration -->
+            <div class="bg-gradient-to-r from-indigo-100 to-purple-100 p-6 rounded-lg border-2 border-indigo-300 text-center">
+                <div class="text-4xl mb-3">🎉</div>
+                <h4 class="text-xl font-bold text-indigo-900 mb-2">축하합니다!</h4>
+                <p class="text-indigo-700 text-lg font-medium">
+                    "당신은 이제 세상을 바꾸는 따뜻한 S/W 발명가입니다!"
+                </p>
+            </div>
+        </div>
+
+        <!-- Final Reflection: 성장의 기쁨 -->
+        <div class="bg-white rounded-xl shadow p-6 border-l-4 border-indigo-500">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>✨</span> [최종 성찰] 성장의 기쁨
+            </h3>
+            
+            <div class="space-y-6">
+                <!-- AI Collaboration Score -->
+                <div class="bg-yellow-50 p-5 rounded-lg border-2 border-yellow-300">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">오늘 나의 AI 협력 점수는 몇 점인가요?</label>
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="flex text-yellow-400 text-3xl cursor-pointer" id="star-rating">
+                            <span class="star hover:text-yellow-500 transition" data-value="1" onclick="setRating(1)">☆</span>
+                            <span class="star hover:text-yellow-500 transition" data-value="2" onclick="setRating(2)">☆</span>
+                            <span class="star hover:text-yellow-500 transition" data-value="3" onclick="setRating(3)">☆</span>
+                            <span class="star hover:text-yellow-500 transition" data-value="4" onclick="setRating(4)">☆</span>
+                            <span class="star hover:text-yellow-500 transition" data-value="5" onclick="setRating(5)">☆</span>
+                        </div>
+                        <span class="text-2xl font-bold text-yellow-600" id="rating-value">0</span>
+                        <span class="text-sm text-gray-600">/ 5점</span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">이유</label>
+                        <textarea rows="3" class="w-full p-3 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-sm" placeholder="이 점수를 준 이유를 적어보세요. AI와 협력이 잘 되었나요? 어떤 점이 좋았고, 어떤 점이 아쉬웠나요?"></textarea>
+                    </div>
+                </div>
+
+                <!-- Overall Reflection -->
+                <div class="bg-indigo-50 p-5 rounded-lg border-2 border-indigo-300">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">전체 프로젝트를 통해 가장 크게 성장한 점</label>
+                    <textarea rows="4" class="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="8차시 동안의 여정을 돌아보며, 내가 가장 성장했다고 느끼는 부분을 자유롭게 적어보세요..."></textarea>
+                </div>
+
+                <!-- Message to Future Self -->
+                <div class="bg-green-50 p-5 rounded-lg border-2 border-green-300">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">미래의 나에게 보내는 메시지</label>
+                    <textarea rows="3" class="w-full p-3 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-sm" placeholder="1년 후의 나에게 이 프로젝트를 통해 배운 점과 응원의 메시지를 남겨보세요..."></textarea>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="bg-white border-t border-gray-200 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="text-sm text-gray-500">
+            © 2024 AI S/W Invention Class. Based on "Vibe Coding" Model.
+        </div>
+        <div class="flex space-x-4">
+            <span class="text-xs px-2 py-1 bg-gray-100 rounded text-gray-600">교과 융합형 활동지</span>
+            <span class="text-xs px-2 py-1 bg-gray-100 rounded text-gray-600">AI 협업</span>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // --- Navigation Logic ---
+    const steps = [
+        { id: 'step-1', label: '1. 공감/발견', icon: '🌿' },
+        { id: 'step-2', label: '2. 아이디어', icon: '💡' },
+        { id: 'step-3', label: '3. 설계도', icon: '🏗️' },
+        { id: 'step-4', label: '4. 개선', icon: '🛠️' },
+        { id: 'step-5', label: '5. 성찰', icon: '✨' }
+    ];
+
+    let currentStepId = 'step-1';
+
+    function renderNav() {
+        const navContainer = document.getElementById('nav-tabs');
+        navContainer.innerHTML = steps.map(step => `
+            <button 
+                onclick="switchStep('${step.id}')"
+                class="${step.id === currentStepId 
+                    ? 'border-teal-500 text-teal-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} 
+                whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200"
+            >
+                <span>${step.icon}</span> ${step.label}
+            </button>
+        `).join('');
+    }
+
+    function switchStep(stepId) {
+        currentStepId = stepId;
+        renderNav();
+        
+        // Hide all contents
+        document.querySelectorAll('.step-content').forEach(el => {
+            el.classList.remove('active');
+        });
+        
+        // Show selected content
+        document.getElementById(stepId).classList.add('active');
+
+        // Trigger chart resize/update if needed when tab becomes visible
+        if(stepId === 'step-2' && window.ideaChartInstance) {
+            window.ideaChartInstance.resize();
+        }
+        if(stepId === 'step-5') {
+            if(window.growthChartInstance) {
+                window.growthChartInstance.resize();
+            }
+            if(window.growthChartExampleInstance) {
+                window.growthChartExampleInstance.resize();
+            }
+            if(window.attitudeChartInstance) {
+                window.attitudeChartInstance.resize();
+            }
+            if(window.creativityChartInstance) {
+                window.creativityChartInstance.resize();
+            }
+        }
+    }
+
+    // --- SCAMPER Logic ---
+    function updateScamper(type) {
+        const display = document.getElementById('scamper-display');
+        let content = '';
+        
+        if (type === 'combine') {
+            content = `
+                <div class="text-center animation-fade-in">
+                    <h4 class="font-bold text-indigo-700 text-lg mb-2">더하기 (Combine)</h4>
+                    <p class="text-gray-700 mb-2"><strong>예시:</strong> 연필꽂이 + 집게</p>
+                    <p class="bg-white p-3 rounded shadow-sm inline-block text-indigo-600">
+                        "우산 알리미 앱에 <strong>날씨 알람 기능</strong>을 더해줘."
+                    </p>
+                </div>
+            `;
+        } else if (type === 'modify') {
+            content = `
+                <div class="text-center animation-fade-in">
+                    <h4 class="font-bold text-green-700 text-lg mb-2">용도 바꾸기 (Put to other use)</h4>
+                    <p class="text-gray-700 mb-2"><strong>예시:</strong> 페트병 -> 우산꽂이</p>
+                    <p class="bg-white p-3 rounded shadow-sm inline-block text-green-600">
+                        "원래 공부용 타이머를 <strong>양치질 게임</strong>으로 바꿔줘."
+                    </p>
+                </div>
+            `;
+        } else if (type === 'eliminate') {
+            content = `
+                <div class="text-center animation-fade-in">
+                    <h4 class="font-bold text-red-700 text-lg mb-2">제거하기 (Eliminate)</h4>
+                    <p class="text-gray-700 mb-2"><strong>예시:</strong> 복잡한 기능 빼기</p>
+                    <p class="bg-white p-3 rounded shadow-sm inline-block text-red-600">
+                        "어르신을 위해 <strong>복잡한 메뉴를 없애고</strong> 큰 버튼 하나만 남겨줘."
+                    </p>
+                </div>
+            `;
+        }
+        display.innerHTML = content;
+    }
+
+    // --- Chart.js Logic ---
+    function initCharts() {
+        // Idea Evaluation Chart (Bar)
+        const ideaCtx = document.getElementById('ideaChart').getContext('2d');
+        window.ideaChartInstance = new Chart(ideaCtx, {
+            type: 'bar',
+            data: {
+                labels: ['창의성 (Creativity)', '따뜻함 (Social Value)', '실현 가능성 (Feasibility)'],
+                datasets: [
+                    {
+                        label: 'A: 스마트 우산꽂이',
+                        data: [7, 9, 8],
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)', // Blue
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'B: 양치질 게임',
+                        data: [9, 7, 9],
+                        backgroundColor: 'rgba(249, 115, 22, 0.6)', // Orange
+                        borderColor: 'rgba(249, 115, 22, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 10
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Growth Radar Chart - Example (Static)
+        const growthExampleCtx = document.getElementById('growthChartExample').getContext('2d');
+        window.growthChartExampleInstance = new Chart(growthExampleCtx, {
+            type: 'radar',
+            data: {
+                labels: ['관찰력', 'AI 협업능력', '문제해결력', '끈기/도전', '공감능력'],
+                datasets: [{
+                    label: '예시: 철수의 성장',
+                    data: [4, 5, 3, 4, 5],
+                    fill: true,
+                    backgroundColor: 'rgba(156, 163, 175, 0.2)',
+                    borderColor: 'rgb(156, 163, 175)',
+                    pointBackgroundColor: 'rgb(156, 163, 175)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(156, 163, 175)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: {
+                            display: false
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 5,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Growth Radar Chart - Interactive (User Input)
+        const growthCtx = document.getElementById('growthChart').getContext('2d');
+        window.growthChartInstance = new Chart(growthCtx, {
+            type: 'radar',
+            data: {
+                labels: ['관찰력', 'AI 협업능력', '문제해결력', '끈기/도전', '공감능력'],
+                datasets: [{
+                    label: '나의 성장 그래프',
+                    data: [3, 3, 3, 3, 3],
+                    fill: true,
+                    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                    borderColor: 'rgb(99, 102, 241)',
+                    pointBackgroundColor: 'rgb(99, 102, 241)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(99, 102, 241)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: {
+                            display: false
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 5,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Attitude Radar Chart
+        const attitudeCtx = document.getElementById('attitudeChart').getContext('2d');
+        window.attitudeChartInstance = new Chart(attitudeCtx, {
+            type: 'radar',
+            data: {
+                labels: ['인지적 태도', '관심적 태도', '실천적 태도', '정서적 태도'],
+                datasets: [{
+                    label: '나의 발명 태도',
+                    data: [3, 3, 3, 3],
+                    fill: true,
+                    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                    borderColor: 'rgb(139, 92, 246)',
+                    pointBackgroundColor: 'rgb(139, 92, 246)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(139, 92, 246)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: {
+                            display: false
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 5,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Creativity Radar Chart
+        const creativityCtx = document.getElementById('creativityChart').getContext('2d');
+        window.creativityChartInstance = new Chart(creativityCtx, {
+            type: 'radar',
+            data: {
+                labels: ['자기 확신', '확산적 사고', '비판적 사고', '동기적 요소'],
+                datasets: [{
+                    label: '나의 창의적 문제 해결력',
+                    data: [3, 3, 3, 3],
+                    fill: true,
+                    backgroundColor: 'rgba(236, 72, 153, 0.2)',
+                    borderColor: 'rgb(236, 72, 153)',
+                    pointBackgroundColor: 'rgb(236, 72, 153)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(236, 72, 153)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: {
+                            display: false
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 5,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Add event listeners for attitude sliders
+        setupAttitudeListeners();
+        setupCreativityListeners();
+    }
+
+    // --- Update Radar Chart with User Input ---
+    function updateRadarChart() {
+        const observation = parseInt(document.getElementById('slider-observation').value);
+        const ai = parseInt(document.getElementById('slider-ai').value);
+        const problem = parseInt(document.getElementById('slider-problem').value);
+        const persistence = parseInt(document.getElementById('slider-persistence').value);
+        const empathy = parseInt(document.getElementById('slider-empathy').value);
+
+        // Update score displays
+        document.getElementById('score-observation').textContent = observation;
+        document.getElementById('score-ai').textContent = ai;
+        document.getElementById('score-problem').textContent = problem;
+        document.getElementById('score-persistence').textContent = persistence;
+        document.getElementById('score-empathy').textContent = empathy;
+
+        // Update chart data
+        if (window.growthChartInstance) {
+            window.growthChartInstance.data.datasets[0].data = [observation, ai, problem, persistence, empathy];
+            window.growthChartInstance.update();
+        }
+    }
+
+    // --- Star Rating System ---
+    let currentRating = 0;
+
+    function setRating(rating) {
+        currentRating = rating;
+        document.getElementById('rating-value').textContent = rating;
+        
+        // Update stars
+        const stars = document.querySelectorAll('.star');
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.textContent = '★';
+                star.style.color = '#FBBF24'; // yellow-400
+            } else {
+                star.textContent = '☆';
+                star.style.color = '#FCD34D'; // yellow-300
+            }
+        });
+    }
+
+    // --- Attitude Chart Update ---
+    function setupAttitudeListeners() {
+        const attitudeSliders = [
+            { id: 'attitude-cognitive', scoreId: 'score-cognitive', index: 0 },
+            { id: 'attitude-interest', scoreId: 'score-interest', index: 1 },
+            { id: 'attitude-action', scoreId: 'score-action', index: 2 },
+            { id: 'attitude-emotion', scoreId: 'score-emotion', index: 3 }
+        ];
+
+        attitudeSliders.forEach(slider => {
+            const element = document.getElementById(slider.id);
+            if (element) {
+                element.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    document.getElementById(slider.scoreId).textContent = value;
+                    updateAttitudeChart();
+                });
+            }
+        });
+    }
+
+    function updateAttitudeChart() {
+        const cognitive = parseInt(document.getElementById('attitude-cognitive')?.value || 3);
+        const interest = parseInt(document.getElementById('attitude-interest')?.value || 3);
+        const action = parseInt(document.getElementById('attitude-action')?.value || 3);
+        const emotion = parseInt(document.getElementById('attitude-emotion')?.value || 3);
+
+        if (window.attitudeChartInstance) {
+            window.attitudeChartInstance.data.datasets[0].data = [cognitive, interest, action, emotion];
+            window.attitudeChartInstance.update();
+        }
+    }
+
+    // --- Creativity Chart Update ---
+    function setupCreativityListeners() {
+        const creativitySliders = [
+            { id: 'creative-confidence', scoreId: 'score-confidence', index: 0 },
+            { id: 'creative-divergent', scoreId: 'score-divergent', index: 1 },
+            { id: 'creative-critical', scoreId: 'score-critical', index: 2 },
+            { id: 'creative-motivation', scoreId: 'score-motivation', index: 3 }
+        ];
+
+        creativitySliders.forEach(slider => {
+            const element = document.getElementById(slider.id);
+            if (element) {
+                element.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    document.getElementById(slider.scoreId).textContent = value;
+                    updateCreativityChart();
+                });
+            }
+        });
+    }
+
+    function updateCreativityChart() {
+        const confidence = parseInt(document.getElementById('creative-confidence')?.value || 3);
+        const divergent = parseInt(document.getElementById('creative-divergent')?.value || 3);
+        const critical = parseInt(document.getElementById('creative-critical')?.value || 3);
+        const motivation = parseInt(document.getElementById('creative-motivation')?.value || 3);
+
+        if (window.creativityChartInstance) {
+            window.creativityChartInstance.data.datasets[0].data = [confidence, divergent, critical, motivation];
+            window.creativityChartInstance.update();
+        }
+    }
+
+    // --- Prompt Builder Logic ---
+    function generateMasterPrompt() {
+        // Get values from new input fields
+        const roleField = document.getElementById('prompt-role-field').value.trim() || "[역할을 입력하세요]";
+        const taskProblem = document.getElementById('prompt-task-problem').value.trim() || "[문제를 입력하세요]";
+        const taskType = document.getElementById('prompt-task-type').value.trim() || "[앱 종류를 입력하세요]";
+        const constraintExtra = document.getElementById('prompt-constraint-extra').value.trim() || "";
+
+        // Get select values
+        const fontSize = document.querySelector('select').value;
+        const colorTheme = document.querySelectorAll('select')[1].value;
+        const buttonCount = document.querySelectorAll('select')[2].value;
+        const specialFeature = document.querySelectorAll('select')[3].value;
+
+        // Build constraint text
+        let constraints = [];
+        constraints.push(`글자는 ${fontSize}`);
+        constraints.push(`색상은 ${colorTheme}`);
+        constraints.push(`버튼은 ${buttonCount}`);
+        if (specialFeature !== "없음") {
+            constraints.push(specialFeature + " 기능을 추가해줘");
+        }
+        if (constraintExtra) {
+            constraints.push(constraintExtra);
+        }
+
+        const role = `너는 어린이를 위한 ${roleField} 전문가이자 다정한 코딩 파트너야.`;
+        const task = `사용자가 ${taskProblem} 수 있게 돕는 ${taskType}을(를) 만들 거야.`;
+        const constraint = constraints.join(", ") + ".";
+
+        const finalPrompt = `**역할 (Role):**
+${role}
+
+**작업 (Task):**
+${task}
+
+**규칙 (Constraint):**
+${constraint}
+
+---
+위 내용을 바탕으로 웹 애플리케이션 코드를 작성해 주세요.`;
+
+        document.getElementById('master-prompt-display').innerText = finalPrompt;
+    }
+
+    function copyPrompt() {
+        const promptText = document.getElementById('master-prompt-display').innerText;
+        if (promptText && !promptText.includes("여기에 생성된")) {
+            navigator.clipboard.writeText(promptText).then(() => {
+                alert('✅ 프롬프트가 클립보드에 복사되었습니다!\nAI Studio에 붙여넣기 하세요.');
+            });
+        } else {
+            alert('⚠️ 먼저 프롬프트를 생성해주세요.');
+        }
+    }
+
+    // --- Bug Table Logic ---
+    function addBugRow() {
+        const table = document.getElementById('bug-table-body');
+        const newRow = `
+            <tr>
+                <td class="border border-gray-300 px-4 py-3">
+                    <textarea rows="2" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="어떤 문제를 발견했나요?"></textarea>
+                </td>
+                <td class="border border-gray-300 px-4 py-3">
+                    <textarea rows="2" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="AI에게 어떻게 질문했나요?"></textarea>
+                </td>
+                <td class="border border-gray-300 px-4 py-3">
+                    <textarea rows="2" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="AI가 어떤 해결책을 제시했나요?"></textarea>
+                </td>
+                <td class="border border-gray-300 px-4 py-3 text-center align-middle">
+                    <input type="checkbox" class="w-5 h-5">
+                </td>
+            </tr>
+        `;
+        table.insertAdjacentHTML('beforeend', newRow);
+    }
+
+    // Initialization
+    document.addEventListener('DOMContentLoaded', () => {
+        renderNav();
+        switchStep('step-1'); // Default start
+        initCharts();
+    });
+</script>
+
+</body>
+</html>
